@@ -1,4 +1,4 @@
-# ChillWhale Tracker 🐳
+# ChillWhale Tracker 🐳🆙
 
 ChillWhale Tracker is a real-time asset tracking and analytics tool for the ChillWhale NFT collection. 
 It provides live updates on asset listings, floor prices, and whale scores, enhancing the experience of NFT enthusiasts and traders.
@@ -65,4 +65,4 @@ This project is licensed under the MIT License.
 
 The ChillWhale community for their continuous support. Contributors who have helped in enhancing this tool.
 
-🚀 Happy Tracking with ChillWhale Tracker! 🐳
+🚀 Happy Tracking with ChillWhale Tracker! 🆙🐳
