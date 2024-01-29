@@ -1,65 +1,68 @@
-# 🚀 FTP-Sync: Your Next-Gen Synchronization Tool
+# ChillWhale Tracker 🐳
 
-Elegantly crafted in TypeScript, **FTP-Sync** is not just another FTP tool – it's your best companion for seamless file synchronization. Dive into an immersive experience that combines power with simplicity, making FTP synchronization not just efficient but delightful.
+ChillWhale Tracker is a real-time asset tracking and analytics tool for the ChillWhale NFT collection. 
+It provides live updates on asset listings, floor prices, and whale scores, enhancing the experience of NFT enthusiasts and traders.
 
-Initially started to solve a personal problem but it's always good to provide code to the public!
+## Features
 
-## 🎥 Sync tool in action
-![Example video](https://raw.githubusercontent.com/slippyex/ftp-sync/master/docs/20230831075802.gif)
+- Real-time tracking of ChillWhale NFT assets.
+- Display of assets based on price (low to high) and recent listings.
+- Live updates on floor prices in the ChillWhale collection.
+- Whale score analytics for better insight into asset value.
+- Interactive UI with scrolling and mode toggling capabilities.
 
+## Installation
 
-## 🌟 Features
+Before you begin, ensure you have Node.js installed on your system. Then, follow these steps:
 
-- 📊 **Dynamic UI**: Real-time, visually appealing UI that keeps you informed about the synchronization status.
-- 🔧 **Highly Configurable**: Tailor your paths for local, remote, and patch directories as per your needs.
-- ⚡ **Hyper-Efficient Syncing**: Intelligent algorithms ensure only changed or new files are downloaded, saving you time and bandwidth.
-- 🎮 **Interactive Controls**: Take control of your sync processes with intuitive keyboard commands.
-
-## 🚀 Getting Started
-
-### 🔍 Prerequisites
-Make sure you've got Node.js and npm up and running.
-
-1. 📦 Clone the repository and dive in!
+1. Clone the repository:
    ```bash
-   > git clone https://github.com/slippyex/ftp-sync.git
+   git clone [repository-url]
    ```
-2. 📍 Enter the heart of the project:
+2. Navigate to the project directory:
+   ```bash
+   cd chillwhale-tracker
    ```
-   > cd ftp-sync
-   ```
-3. 🛠 set up in and jiffy
-   ``` 
-   > npm install
-   ```
+3. Install the dependencies:
 
-## 🎮 How to Use
-
-🛠 Customize Your Experience: Head over to the configs directory and fine-tune your FTP settings.
-
-Have a look at the provided `config.json` file and create your own setup. Should be intuitive enough.
-## 🚀 Launch and Soar:
-   ``` 
-   > npm run sync config.json
+   ```bash
+   npm install (or yarn install)
    ```
 
-## 🎹 Master the Controls:
-    s: Ignite the synchronization!
-    x: Pause to catch a breath or resume to fly again.
-    q or C-c: Say goodbye and exit.
+## Usage
 
-## 🤝 Join the Movement!
+To start the ChillWhale Tracker, run:
+   ```
+   npm run sync (or yarn sync)
+   ```
 
-We're always looking for fellow adventurers! 
+## Key Bindings
 
-Got ideas? Wish to enhance a feature? 
+    UP/DOWN arrows: Scroll through the asset list.
+    T: Toggle between 'price-low-high' and 'recently-listed' modes.
+    ESC, Q, or Ctrl + C: Exit the application.
 
-Or simply spotted a pesky bug? 
+## Configuration
 
-Join hands with us! Contributions, issues, and feature requests are more than welcome. 
+Modify the config.js file to set parameters like chain endpoint, contract address, and polling intervals.
+Dependencies
 
-Glide over to the issues page and drop a word.
+   * axios: For HTTP requests.
+   * blessed: For building the interactive UI.
+   * dayjs: For date formatting.
+   * chalk: For text styling in the console.
+   *  web3: For Ethereum blockchain interaction.
 
-## 📜 License
+## Contributing
 
-Exploring with freedom, under the MIT License.
+Contributions to the ChillWhale Tracker are welcome! Please read our contributing guidelines for details on how to contribute.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgements
+
+The ChillWhale community for their continuous support. Contributors who have helped in enhancing this tool.
+
+🚀 Happy Tracking with ChillWhale Tracker! 🐳

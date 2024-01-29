@@ -166,7 +166,7 @@ async function fetchAssets() {
 
 async function getClaimedStatusFor(tokenId: string): Promise<boolean> {
     try {
-        return await contract.methods.getClaimedStatusFor(tokenId).call() as boolean;
+        return (await contract.methods.getClaimedStatusFor(tokenId).call()) as boolean;
     } catch (error) {
         console.error('Error:', error);
     }
