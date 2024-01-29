@@ -51,7 +51,7 @@ Dependencies
    * blessed: For building the interactive UI.
    * dayjs: For date formatting.
    * chalk: For text styling in the console.
-   *  web3: For Ethereum blockchain interaction.
+   * web3: For LUKSO blockchain interaction.
 
 ## Contributing
 
