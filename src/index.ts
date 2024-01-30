@@ -1,86 +1,137 @@
-import axios from 'axios';
-import blessed from 'blessed';
 import dayjs from 'dayjs';
 import chalk from 'chalk';
-import { Web3 } from 'web3';
 import config from './config';
 
-import { Asset, StaticStats } from './@types';
+import { Asset, GatherMode } from './@types';
 import { readFileContent, writeFileContent, padRight } from './utils';
+import { initializeUI } from './ui';
+import { fetchAssets, fetchFloorPricePer } from './requests/universalpage';
+import { fetchStaticStats } from './requests/chillwhales';
+import { getClaimedStatusFor } from './requests/onchain';
 
-const contractABI = readFileContent('resources', 'ChillContractABI.json');
 const chillClaimedCache = JSON.parse(readFileContent('cache', 'chillClaimed.json')) as Record<string, boolean>;
-const web3 = new Web3(config.chainEndpoint);
-const contract = new web3.eth.Contract(JSON.parse(contractABI), config.contractAddress);
+
 const seenListingIds = new Set<string>();
 const displayedAssets = new Map<string, string>();
+const assetDetailsMap = new Map<string, Asset>();
+
 let scores: Record<number, number>;
-let gatherMode: 'price-low-high' | 'recently-listed' = 'recently-listed';
+let gatherMode: GatherMode = 'recently-listed';
+let focusedLine = 0; // Variable to keep track of the focused line
 
 // Initialize UI components
-const { screen, mainBox, floorPriceBox } = initializeUI();
+const { screen, masterView, floorPriceBox, detailsView, modeView } = initializeUI();
 
 (async () => {
-    mainBox.key(['up', 'down'], (ch, key) => {
-        if (key.name === 'up') {
-            mainBox.scroll(-1);
-        } else if (key.name === 'down') {
-            mainBox.scroll(1);
-        }
-        screen.render();
-    });
-
-    screen.key('t', async () => {
-        gatherMode = gatherMode === 'price-low-high' ? 'recently-listed' : 'price-low-high';
-        displayedAssets.clear();
-        seenListingIds.clear();
-        await fetchAssets();
-        screen.render();
-    });
+    setupKeyBindings();
     screen.render();
-    // Exit on Escape, q, or Control-C.
-    screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
-
-    // Render the screen.
-    screen.render();
-    await fetchStaticStats();
-    await fetchAssets();
-    setInterval(fetchAssets, config.periodToFetch); // Poll every 30 seconds
+    scores = await fetchStaticStats();
+    await fetchChillWhales();
     await fetchFloorPrice();
-    setInterval(fetchFloorPrice, config.periodToFetch); // Update floor price every 30 seconds
+    setInterval(fetchChillWhales, config.periodToFetchAssets);
+    setInterval(fetchFloorPrice, config.periodToFetchFloor);
 })();
 
-async function fetchStaticStats() {
-    const stats = readFileContent('cache', 'whaleScores.json');
-    if (stats.indexOf('{}') !== -1) {
-        try {
-            const response = await axios.get<StaticStats>(config.chillWhalesScoresUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0'
-                }
-            });
-            scores = response.data.whalesScores;
-            writeFileContent('cache', 'whaleScores.json', JSON.stringify(scores, null, 2));
-        } catch (err) {
-            console.log(err);
+function setupKeyBindings() {
+    masterView.key(['up', 'down'], handleArrowKeys);
+    screen.key('t', toggleGatherMode);
+    screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+}
+
+function handleArrowKeys(_: never, key: { name: string }) {
+    if (key.name === 'up' && focusedLine > 0) focusedLine--;
+    else if (key.name === 'down' && focusedLine < displayedAssets.size - 1) focusedLine++;
+    updateFocus();
+    screen.render();
+}
+
+async function toggleGatherMode() {
+    gatherMode = gatherMode === 'price-low-high' ? 'recently-listed' : 'price-low-high';
+    const modeLabel = gatherMode === 'recently-listed' ? 'recent listings' : 'floor whales';
+    modeView.setContent(`[t] mode: ${modeLabel}`);
+    masterView.setContent(`fetching ${modeLabel} ...`);
+    screen.render();
+    displayedAssets.clear();
+    seenListingIds.clear();
+    await fetchChillWhales();
+    screen.render();
+}
+
+function updateFocus() {
+    let content = '';
+    let line = 0;
+    displayedAssets.forEach(value => {
+        const tokenId = value.match(/#(\d+)/)[1];
+        if (line === focusedLine) {
+            content += chalk.inverse(value) + '\n'; // Invert the color of the focused line
+            updateDetailsView(tokenId); // Update the details box with the selected asset
+        } else {
+            content += value + '\n';
         }
-    } else {
-        scores = JSON.parse(stats) as Record<number, number>;
+        line++;
+    });
+    masterView.setContent(content);
+}
+
+function updateDetailsView(assetId: string) {
+    // Fetch and display details of the selected asset
+    const assetDetails = getAssetDetails(assetId); // Implement this function based on your data structure
+    detailsView.setContent(`Details for Whale #${assetId}:\n========================\n${assetDetails}`);
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getAssetDetails(assetId: string): string {
+    const asset = assetDetailsMap.get(assetId);
+    return asset.tokenAttributes.map(attr => `${padRight(attr.key, 12)}: ${padRight(attr.value, 12)}`).join('\n');
+}
+
+async function fetchChillWhales() {
+    try {
+        const assets = await fetchAssets(gatherMode);
+
+        for (const asset of assets) {
+            if (chillClaimedCache[asset.tokenId]) {
+                asset.chillClaimed = chillClaimedCache[asset.tokenId];
+            }
+            asset.chillClaimed = await getClaimedStatusFor(asset.tokenId);
+            if (asset.chillClaimed) {
+                chillClaimedCache[asset.tokenId] = true;
+                writeFileContent('cache', 'chillClaimed.json', JSON.stringify(chillClaimedCache, null, 2));
+            }
+            assetDetailsMap.set(asset.tokenName.split('#')[1], asset);
+        }
+        const newAssets = assets.filter(asset => !seenListingIds.has(asset.listingId));
+        updateDisplayedAssets(newAssets);
+        updateFocus();
+    } catch (error) {
+        console.error(`Error fetching assets: ${error}`);
     }
 }
 
 async function fetchFloorPrice() {
+    const skins = ['Orca', 'Chrome', 'E.T.', 'Yatted', 'XRay', 'Gold', 'Cypher', 'Pink', 'Zombie', 'Chilly', 'Reptile'];
+    const mappedPrice = new Map<string, number>();
     try {
-        const floorPriceUrl = config.universalPageCollectionBase + '?page=0&perPage=1&sortBy=price-low-high';
-        const response = await axios.get(floorPriceUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0'
+        for (const skin of skins) {
+            const price = await fetchFloorPricePer(skin);
+            if (price !== -1) {
+                mappedPrice.set(skin, price);
             }
-        });
-        const asset: Asset = response.data[0];
-        const floorPrice = parseFloat(asset.listingItemPrice) / 1e18;
+        }
+        // Convert the map into an array and sort it
+        const sortedArray = Array.from(mappedPrice).sort((a, b) => a[1] - b[1]);
+        // Format the sorted array into rows with three items each
+        const rows: string[] = [];
+        for (let i = 0; i < sortedArray.length; i += 4) {
+            rows.push(
+                sortedArray
+                    .slice(i, i + 4)
+                    .map(pair => `${padRight(pair[0] + ':', 15)} ${padRight(pair[1] + '', 10)}`)
+                    .join('') + '\n'
+            );
+        }
+
         floorPriceBox.setContent(
-            `Floor Price: ${floorPrice.toFixed(2)} LYX - last sync: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}`
+            `Floor Prices (last sync: ${dayjs().format('YYYY-MM-DD HH:mm:ss')})\n${rows.join('')}`
         );
         screen.render();
     } catch (error) {
@@ -89,138 +140,47 @@ async function fetchFloorPrice() {
     }
 }
 
-function formatAssetString(asset: Asset): string {
-    const tokenNumber = parseInt(asset.tokenName.split('#')[1], 10);
-    const rank = Object.keys(scores)
+function getRank(tokenNumber: number) {
+    return Object.keys(scores)
         .sort((a, b) => scores[parseInt(b, 10)] - scores[parseInt(a, 10)])
         .map((mapTokenId, index) => (parseInt(mapTokenId, 10) === tokenNumber ? index + 1 : undefined))
-        .filter(elem => elem);
-    const timestamp = dayjs(asset.listingStartAt).format('YYYY-MM-DD HH:mm:ss');
-    const skin = asset.tokenAttributes.find(ta => ta.key === 'Skin')?.value || 'N/A';
-    const tokenNamePadded = padRight(asset.tokenName, 20);
-    const skinPadded = padRight(`${skin}`, 15);
-    const rankPadded = padRight(`Rank: ${rank[0]}`, 15);
-    const price = parseFloat(asset.listingItemPrice) / 1e18;
-    const pricePadded = `Price: ${price.toFixed(2)} LYX`;
+        .find(elem => elem);
+}
 
-    return `${timestamp}\t${tokenNamePadded} (${
-        asset.chillClaimed ? '+' : '-'
-    } $CHILL) skin: ${skinPadded}${rankPadded}${pricePadded}`;
+function getColorByRank(rank: number) {
+    if (rank <= 500) return chalk.red;
+    if (rank <= 1000) return chalk.yellow;
+    if (rank <= 3000) return chalk.green;
+    if (rank <= 5000) return chalk.blue;
+    if (rank <= 7000) return chalk.white;
+    return chalk.grey;
+}
+
+function formatAssetString(asset: Asset): string {
+    const tokenNumber = parseInt(asset.tokenName.split('#')[1], 10);
+    const rank = getRank(tokenNumber);
+    const timestamp = dayjs(asset.listingStartAt).format('YYYY-MM-DD HH:mm:ss');
+    const tokenNamePadded = padRight(asset.tokenName, 20);
+    const rankPadded = padRight(` Rank: ${rank}`, 15);
+    const price = parseFloat(asset.listingItemPrice) / 1e18;
+    const pricePadded = `Price ${price.toFixed(2)} LYX`;
+
+    return `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '+' : '-'} $CHILL)${rankPadded}${pricePadded}`;
 }
 
 function updateDisplayedAssets(newAssets: Asset[]) {
-    const currentAssets = new Set(newAssets.map(a => a.listingId));
-
-    // Update the displayedAssets map
     newAssets.forEach(asset => {
         const formattedString = formatAssetString(asset);
         const isNew = !seenListingIds.has(asset.listingId);
         seenListingIds.add(asset.listingId);
 
-        // Apply chalk styles
-        const styledString = isNew ? chalk.green.bold(formattedString) : chalk.white(formattedString);
+        const rank = getRank(parseInt(asset.tokenName.split('#')[1], 10));
+        const color = getColorByRank(rank);
+        const styledString = isNew ? color.bold(formattedString) : color(formattedString);
+
         displayedAssets.set(asset.listingId, styledString);
     });
 
-    // Dim assets that are no longer present
-    displayedAssets.forEach((value, id) => {
-        if (!currentAssets.has(id)) {
-            displayedAssets.set(id, chalk.grey.strikethrough.dim(value));
-        }
-    });
-
-    // Reverse the order of items so newest are at the top
-    const reversedContent = Array.from(displayedAssets.values()).join('\n');
-    mainBox.setContent(reversedContent);
+    masterView.setContent(Array.from(displayedAssets.values()).join('\n'));
     screen.render();
-}
-
-async function fetchAssets() {
-    try {
-        const url = config.universalPageCollectionBase + `?page=0&perPage=${config.amountToFetch}&sortBy=${gatherMode}`;
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0'
-            }
-        });
-        const assets: Asset[] = response.data;
-
-        for (const asset of assets) {
-            if (chillClaimedCache[asset.tokenId]) {
-                asset.chillClaimed = chillClaimedCache[asset.tokenId];
-            }
-            {
-                asset.chillClaimed = await getClaimedStatusFor(asset.tokenId);
-                if (asset.chillClaimed) {
-                    chillClaimedCache[asset.tokenId] = true;
-                    writeFileContent('cache', 'chillClaimed.json', JSON.stringify(chillClaimedCache, null, 2));
-                }
-            }
-        }
-        const newAssets = assets.filter(asset => !seenListingIds.has(asset.listingId));
-        updateDisplayedAssets(newAssets);
-    } catch (error) {
-        console.error(`Error fetching assets: ${error}`);
-    }
-}
-
-async function getClaimedStatusFor(tokenId: string): Promise<boolean> {
-    try {
-        return (await contract.methods.getClaimedStatusFor(tokenId).call()) as boolean;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-function initializeUI() {
-    const screen = blessed.screen({
-        smartCSR: true,
-        title: 'ChillWhale Tracker'
-    });
-
-    const mainBox = blessed.box({
-        parent: screen,
-        top: 'top',
-        left: 'left',
-        width: '100%',
-        height: '90%', // Set height to 90% to leave space for the floor price box
-        scrollable: true,
-        alwaysScroll: true,
-        keys: true,
-        vi: true,
-        mouse: true,
-        scrollbar: {
-            ch: ' '
-        },
-        border: 'line',
-        style: {
-            fg: 'white',
-            bg: 'black',
-            border: {
-                fg: '#f0f0f0'
-            },
-            scrollbar: {
-                bg: 'blue'
-            }
-        }
-    });
-
-    // Position the floor price box at the bottom
-    const floorPriceBox = blessed.box({
-        parent: screen,
-        top: '90%', // Position at 90% from the top
-        left: 'center',
-        width: '50%',
-        height: '10%', // Height is 10% of the screen
-        content: 'Fetching floor price...',
-        border: 'line',
-        style: {
-            fg: 'white',
-            bg: 'black',
-            border: {
-                fg: '#f0f0f0'
-            }
-        }
-    });
-    return { screen, mainBox, floorPriceBox };
 }

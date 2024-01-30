@@ -15,3 +15,5 @@ export interface Asset {
 export interface StaticStats {
     whalesScores: Record<number, number>;
 }
+
+export type GatherMode = 'price-low-high' | 'recently-listed';
