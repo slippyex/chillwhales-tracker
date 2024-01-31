@@ -1,15 +1,16 @@
 import dayjs from 'dayjs';
 import chalk from 'chalk';
-import config from './config';
+import config, { colorMapping, rankColorConfig } from './config';
 
 import { Asset, GatherMode } from './@types';
 import { readFileContent, writeFileContent, padRight } from './utils';
 import { initializeUI } from './ui';
 import { fetchAssets, fetchFloorPricePer } from './requests/universalpage';
 import { fetchStaticStats } from './requests/chillwhales';
-import { getClaimedStatusFor } from './requests/onchain';
+import { isBurntWhaleClaimed, isChillClaimed } from './requests/onchain';
 
 const chillClaimedCache = JSON.parse(readFileContent('cache', 'chillClaimed.json')) as Record<string, boolean>;
+const burntWhalesCache = JSON.parse(readFileContent('cache', 'burntWhaleClaimed.json')) as Record<string, boolean>;
 
 const seenListingIds = new Set<string>();
 const displayedAssets = new Map<string, string>();
@@ -74,14 +75,38 @@ function updateFocus() {
 }
 
 function updateDetailsView(assetId: string) {
-    // Fetch and display details of the selected asset
-    const assetDetails = getAssetDetails(assetId); // Implement this function based on your data structure
+    const assetDetails = getAssetDetails(assetId);
     detailsView.setContent(`Details for Whale #${assetId}:\n========================\n${assetDetails}`);
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getAssetDetails(assetId: string): string {
     const asset = assetDetailsMap.get(assetId);
-    return asset.tokenAttributes.map(attr => `${padRight(attr.key, 12)}: ${padRight(attr.value, 12)}`).join('\n');
+    const chillClaimed = `${padRight('$CHILL', 12)}: ${padRight(asset.chillClaimed ? 'claimed' : 'unclaimed', 12)}\n`;
+    const burntWhaleClaimed = `${padRight('BurntWhale', 12)}: ${padRight(asset.burntWhaleClaimed ? 'claimed' : 'unclaimed', 12)}\n`;
+    return (
+        chillClaimed +
+        burntWhaleClaimed +
+        '========================\n' +
+        asset.tokenAttributes.map(attr => `${padRight(attr.key, 12)}: ${padRight(attr.value, 12)}`).join('\n')
+    );
+}
+
+async function updateClaimStatus(
+    asset: Asset,
+    tokenId: string,
+    cache: Record<string, boolean>,
+    claimType: 'chillClaimed' | 'burntWhaleClaimed',
+    checkClaimStatus: (tokenId: string) => Promise<boolean>
+) {
+    if (cache[tokenId]) {
+        asset[claimType] = cache[tokenId];
+    } else {
+        asset[claimType] = await checkClaimStatus(tokenId);
+        if (asset[claimType]) {
+            cache[tokenId] = true;
+            writeFileContent('cache', `${claimType}.json`, JSON.stringify(cache, null, 2));
+        }
+    }
 }
 
 async function fetchChillWhales() {
@@ -89,14 +114,8 @@ async function fetchChillWhales() {
         const assets = await fetchAssets(gatherMode);
 
         for (const asset of assets) {
-            if (chillClaimedCache[asset.tokenId]) {
-                asset.chillClaimed = chillClaimedCache[asset.tokenId];
-            }
-            asset.chillClaimed = await getClaimedStatusFor(asset.tokenId);
-            if (asset.chillClaimed) {
-                chillClaimedCache[asset.tokenId] = true;
-                writeFileContent('cache', 'chillClaimed.json', JSON.stringify(chillClaimedCache, null, 2));
-            }
+            await updateClaimStatus(asset, asset.tokenId, burntWhalesCache, 'burntWhaleClaimed', isBurntWhaleClaimed);
+            await updateClaimStatus(asset, asset.tokenId, chillClaimedCache, 'chillClaimed', isChillClaimed);
             assetDetailsMap.set(asset.tokenName.split('#')[1], asset);
         }
         const newAssets = assets.filter(asset => !seenListingIds.has(asset.listingId));
@@ -147,30 +166,58 @@ function getRank(tokenNumber: number) {
         .find(elem => elem);
 }
 
-function getColorByRank(rank: number) {
-    if (rank <= 500) return chalk.red;
-    if (rank <= 1000) return chalk.yellow;
-    if (rank <= 3000) return chalk.green;
-    if (rank <= 5000) return chalk.blue;
-    if (rank <= 7000) return chalk.white;
-    return chalk.grey;
+function getColorByRank(rank: number, config = rankColorConfig) {
+    const colorConfig = config.find(configItem => rank <= configItem.maxRank);
+    const color = colorConfig ? colorConfig.color : 'grey';
+    return colorMapping[color] || chalk.grey; // Default to grey if color not found
 }
 
-function formatAssetString(asset: Asset): string {
+function formatAssetString(asset: Asset, typicalPrices: Map<number, number>): string {
     const tokenNumber = parseInt(asset.tokenName.split('#')[1], 10);
     const rank = getRank(tokenNumber);
+    const typicalPrice = typicalPrices.get(rank) || 0;
+    const price = parseFloat(asset.listingItemPrice) / 1e18;
+
+    // Mark as cheap if price is less than 25% of the typical price
+    const isCheap = price < typicalPrice * 0.25;
+
     const timestamp = dayjs(asset.listingStartAt).format('YYYY-MM-DD HH:mm:ss');
     const tokenNamePadded = padRight(asset.tokenName, 20);
-    const rankPadded = padRight(` Rank: ${rank}`, 15);
-    const price = parseFloat(asset.listingItemPrice) / 1e18;
-    const pricePadded = `Price ${price.toFixed(2)} LYX`;
+    const rankPadded = padRight(` Rank: ${rank}`, 13);
+    const pricePadded = `Price ${price.toFixed(2)} LYX ${isCheap ? '**' : ''}`;
 
-    return `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '+' : '-'} $CHILL)${rankPadded}${pricePadded}`;
+    return `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '-' : '+'} $CHILL)${rankPadded}${pricePadded}`;
+}
+
+function calculateTypicalPricesByRank(assets: Asset[]): Map<number, number> {
+    const rankPrices = new Map<number, number[]>();
+
+    // Group prices by rank
+    assets.forEach(asset => {
+        const rank = getRank(parseInt(asset.tokenName.split('#')[1], 10));
+        const price = parseFloat(asset.listingItemPrice) / 1e18;
+
+        if (!rankPrices.has(rank)) {
+            rankPrices.set(rank, []);
+        }
+        rankPrices.get(rank).push(price);
+    });
+
+    // Calculate average or median price for each rank
+    const typicalPrices = new Map<number, number>();
+    rankPrices.forEach((prices, rank) => {
+        const averagePrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+        typicalPrices.set(rank, averagePrice);
+    });
+
+    return typicalPrices;
 }
 
 function updateDisplayedAssets(newAssets: Asset[]) {
     newAssets.forEach(asset => {
-        const formattedString = formatAssetString(asset);
+        const typicalPrices = calculateTypicalPricesByRank(newAssets);
+
+        const formattedString = formatAssetString(asset, typicalPrices);
         const isNew = !seenListingIds.has(asset.listingId);
         seenListingIds.add(asset.listingId);
 

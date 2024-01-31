@@ -5,6 +5,7 @@ export interface Asset {
     listingStartAt: string;
     tokenId: string;
     chillClaimed: boolean;
+    burntWhaleClaimed: boolean;
     tokenAttributes: {
         key: string;
         type: 'STRING' | 'NUMBER';
