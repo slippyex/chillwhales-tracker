@@ -5,7 +5,7 @@ import config, { colorMapping, rankColorConfig } from './config';
 import { Asset, GatherMode } from './@types';
 import { readFileContent, writeFileContent, padRight } from './utils';
 import { initializeUI } from './ui';
-import { fetchAssets, fetchFloorPricePer } from './requests/universalpage';
+import { fetchAssets, fetchFloorPricePer, fetchHistory } from './requests/universalpage';
 import { fetchStaticStats } from './requests/chillwhales';
 import { isBurntWhaleClaimed, isChillClaimed } from './requests/onchain';
 
@@ -19,9 +19,10 @@ const assetDetailsMap = new Map<string, Asset>();
 let scores: Record<number, number>;
 let gatherMode: GatherMode = 'recently-listed';
 let focusedLine = 0; // Variable to keep track of the focused line
+let focusedAsset: Asset = null;
 
 // Initialize UI components
-const { screen, masterView, floorPriceBox, detailsView, modeView } = initializeUI();
+const { screen, masterView, floorPriceBox, detailsView, modeView, modalAssetHistory } = initializeUI();
 
 (async () => {
     setupKeyBindings();
@@ -37,6 +38,9 @@ function setupKeyBindings() {
     masterView.key(['up', 'down'], handleArrowKeys);
     screen.key('t', toggleGatherMode);
     screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+    screen.key('enter', async function () {
+        await showModalAssetHistory();
+    });
 }
 
 function handleArrowKeys(_: never, key: { name: string }) {
@@ -81,6 +85,7 @@ function updateDetailsView(assetId: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getAssetDetails(assetId: string): string {
     const asset = assetDetailsMap.get(assetId);
+    focusedAsset = asset;
     const chillClaimed = `${padRight('$CHILL', 12)}: ${padRight(asset.chillClaimed ? 'claimed' : 'unclaimed', 12)}\n`;
     const burntWhaleClaimed = `${padRight('BurntWhale', 12)}: ${padRight(asset.burntWhaleClaimed ? 'claimed' : 'unclaimed', 12)}\n`;
     return (
@@ -230,4 +235,23 @@ function updateDisplayedAssets(newAssets: Asset[]) {
 
     masterView.setContent(Array.from(displayedAssets.values()).join('\n'));
     screen.render();
+}
+
+async function showModalAssetHistory() {
+    const assetHistory = await fetchHistory(focusedAsset.tokenId);
+    const content = assetHistory.map(history => {
+        const price = parseFloat(history.totalPaid) / 1e18;
+        return history.createdAt + '\t' + padRight(price + '', 12) + ' LYX';
+    });
+    modalAssetHistory.setContent(content.join('\n'));
+    screen.append(modalAssetHistory);
+    modalAssetHistory.focus();
+    screen.render();
+    modalAssetHistory.key(['enter'], () => closeModalAssetHistory());
+}
+
+function closeModalAssetHistory() {
+    modalAssetHistory.destroy(); // Remove the modal from the screen
+    modalAssetHistory.setContent('fetching asset history ...');
+    screen.render(); // Re-render the screen to update the UI
 }

@@ -85,5 +85,24 @@ export function initializeUI() {
         }
     });
 
-    return { screen, masterView, floorPriceBox, detailsView, modeView };
+    const modalAssetHistory = blessed.box({
+        top: 'center',
+        left: 'center',
+        width: '50%',
+        height: '50%',
+        content: 'Fetching asset history ...',
+        border: {
+            type: 'line'
+        },
+        style: {
+            fg: 'white',
+            bg: 'blue',
+            border: {
+                fg: '#f0f0f0'
+            }
+        },
+        focusable: true
+    });
+
+    return { screen, masterView, floorPriceBox, detailsView, modeView, modalAssetHistory };
 }

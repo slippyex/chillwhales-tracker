@@ -13,6 +13,17 @@ export interface Asset {
     }[];
 }
 
+export interface AssetHistory {
+    createdAt: string;
+    buyer: string;
+    seller: string;
+    totalPaid: string;
+    itemCount: string;
+    transactionHash: string;
+    listingId: string;
+    tokenId: string;
+}
+
 export interface StaticStats {
     whalesScores: Record<number, number>;
 }
