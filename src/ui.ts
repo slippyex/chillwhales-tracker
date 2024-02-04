@@ -14,6 +14,7 @@ export function initializeUI() {
         height: '80%',
         scrollable: true,
         alwaysScroll: true,
+        content: 'Fetching assets...',
         keys: true,
         vi: true,
         mouse: true,

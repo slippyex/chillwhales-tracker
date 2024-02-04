@@ -7,7 +7,7 @@ export default {
     chainEndpoint: 'https://rpc.mainnet.lukso.network',
     chillContractAddress: '0x5B8B0E44D4719F8A328470DcCD3746BFc73d6B14',
     burntWhalesContractAddress: '0x8bF5bf6C2F11643E75Dc4199AF2C7D39B1AEFcD3',
-    universalPageCollectionBase: 'https://universal.page/api/assets/0x86e817172b5c07f7036bf8aa46e2db9063743a83/tokens',
+    universalPageCollectionBase: 'https://universal.page/api',
     chillWhalesScoresUrl: 'https://chillwhales-data-production.up.railway.app/data'
 };
 
@@ -18,7 +18,7 @@ export const rankColorConfig = [
     { maxRank: 3000, color: 'green' },
     { maxRank: 5000, color: 'blue' },
     { maxRank: 7000, color: 'white' },
-    { maxRank: Infinity, color: 'grey' } // Default color for ranks above 7000
+    { maxRank: Infinity, color: 'magenta' } // Default color for ranks above 7000
 ];
 
 export const colorMapping: { [key: string]: chalk.Chalk } = {
@@ -27,5 +27,5 @@ export const colorMapping: { [key: string]: chalk.Chalk } = {
     green: chalk.green,
     blue: chalk.blue,
     white: chalk.white,
-    grey: chalk.grey
+    magenta: chalk.magenta
 };
