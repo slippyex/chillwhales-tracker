@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "sync": "ts-node src/index.ts",
+    "rarity": "ts-node src/tools/rarity-refresh.ts",
     "build": "tsc",
     "format-check": "prettier --config .prettierrc --check ./{src,tests}/**/*.ts",
     "format": "yarn format-check --write",

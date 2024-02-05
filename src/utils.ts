@@ -19,6 +19,12 @@ function findProjectRoot(currentDir: string = __dirname): string | null {
     return findProjectRoot(parentDir);
 }
 
+export function deleteFile(pathName: string, file: string) {
+    const resource = path.join(findProjectRoot('src'), pathName, file);
+    if (fs.existsSync(resource)) {
+        fs.rmSync(resource);
+    }
+}
 export function writeFileContent(pathName: string, file: string, content: string) {
     const resource = path.join(findProjectRoot('src'), pathName, file);
     fs.writeFileSync(resource, content);
