@@ -26,16 +26,19 @@ export function writeFileContent(pathName: string, file: string, content: string
 
 export function readFileContent(pathName: string, file: string, skipWriting = false): string {
     const resource = path.join(findProjectRoot('src'), pathName, file);
-    if (!fs.existsSync(resource) && skipWriting) {
-        if (!skipWriting) {
-            fs.writeFileSync(resource, '{}');
-        } else {
+    // Check if the file exists
+    if (!fs.existsSync(resource)) {
+        // If skipWriting is true, return '{}' without writing
+        if (skipWriting) {
             return '{}';
+        } else {
+            // If skipWriting is false, write '{}' to the file
+            fs.writeFileSync(resource, '{}');
         }
     }
+    // If the file exists, read and return its content
     return fs.readFileSync(resource).toString();
 }
-
 export function padRight(str: string, length: number): string {
     return str + ' '.repeat(Math.max(length - str.length, 0));
 }
