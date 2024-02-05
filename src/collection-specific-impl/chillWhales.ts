@@ -1,7 +1,7 @@
 import { fetchAssets, fetchFloorPricePer } from '../requests/universalpage';
 import { padRight, readFileContent, writeFileContent } from '../utils';
 import dayjs from 'dayjs';
-import { Asset, GatherMode, StaticStats } from 'index';
+import { Asset, GatherMode, StaticChillWhaleStats } from 'index';
 import { isBurntWhaleClaimed, isChillClaimed } from '../requests/onchain';
 import { fetchStaticStats } from '../requests/chillwhales';
 import { colorMapping, rankColorConfig } from '../config';
@@ -10,7 +10,7 @@ import chalk from 'chalk';
 const chillClaimedCache = JSON.parse(readFileContent('cache', 'chillClaimed.json')) as Record<string, boolean>;
 const burntWhalesCache = JSON.parse(readFileContent('cache', 'burntWhaleClaimed.json')) as Record<string, boolean>;
 
-let scores: StaticStats;
+let scores: StaticChillWhaleStats;
 
 async function updateClaimStatus(
     asset: Asset,
@@ -121,9 +121,3 @@ export function formatChillWhalesListEntry(asset: Asset) {
         `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '-' : '+'} $CHILL)${rankPadded}${pricePadded}`
     );
 }
-
-export default {
-    chillWhales: {
-        formatAssetList: formatChillWhalesListEntry
-    }
-};

@@ -21,6 +21,15 @@ export const rankColorConfig = [
     { maxRank: Infinity, color: 'magenta' } // Default color for ranks above 7000
 ];
 
+export const rankColorConfigPercentage = [
+    { percentage: 5, color: 'red' }, // Top 5%
+    { percentage: 10, color: 'yellow' }, // Top 10%
+    { percentage: 30, color: 'green' }, // Top 30%
+    { percentage: 50, color: 'blue' }, // Top 50%
+    { percentage: 70, color: 'white' }, // Top 70%
+    { percentage: 100, color: 'magenta' } // Remaining
+];
+
 export const colorMapping: { [key: string]: chalk.Chalk } = {
     red: chalk.red,
     yellow: chalk.yellow,

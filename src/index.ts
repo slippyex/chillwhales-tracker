@@ -9,7 +9,14 @@ import { assetFetchFunctions } from './collection-functions/fetchAssets';
 import { assetDetailsFunctions } from './collection-functions/assetDetails';
 import { formatAssetListFunctions } from './collection-functions/formatAssetList';
 
-const assetConfig = JSON.parse(readFileContent('resources', 'chillwhales.config.json')) as AssetConfig;
+const args = process.argv.slice(2);
+
+const assetConfig = JSON.parse(
+    readFileContent('configs', `${args.length === 0 ? 'chillwhales' : args[0]}.config.json`, true)
+) as AssetConfig;
+if (!assetConfig.assetContract) {
+    throw new Error(`provided config for collection ${args} is incomplete - no contract address found in the config`);
+}
 
 const displayedAssets = new Map<string, string>();
 const assetDetailsMap = new Map<string, Asset>();

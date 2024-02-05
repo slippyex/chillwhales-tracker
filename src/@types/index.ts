@@ -11,9 +11,11 @@ export interface Asset {
         type: 'STRING' | 'NUMBER';
         value: string;
     }[];
+    rank?: number;
+    score?: number;
 }
 
-export interface StaticStats {
+export interface StaticChillWhaleStats {
     whalesScores: Record<number, number>;
     traitsRarity: Record<string, Record<string, number>>;
 }
@@ -44,4 +46,15 @@ export interface AssetDetailsFunctionContainer {
 
 export interface AssetFormatListFunctionContainer {
     [key: string]: (asset: Asset) => string;
+}
+
+export interface TraitFrequency {
+    [key: string]: {
+        [value: string]: number;
+    };
+}
+export interface RarityLookup {
+    rarity: Record<string, { score: number; rank: number }>;
+    traitFrequencies: TraitFrequency;
+    assetsTotal: number;
 }

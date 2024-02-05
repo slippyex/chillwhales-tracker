@@ -24,8 +24,11 @@ export function writeFileContent(pathName: string, file: string, content: string
     fs.writeFileSync(resource, content);
 }
 
-export function readFileContent(pathName: string, file: string): string {
+export function readFileContent(pathName: string, file: string, skipWriting = false): string {
     const resource = path.join(findProjectRoot('src'), pathName, file);
+    if (skipWriting) {
+        return '{}';
+    }
     if (!fs.existsSync(resource)) {
         fs.writeFileSync(resource, '{}');
     }

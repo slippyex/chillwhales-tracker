@@ -31,3 +31,13 @@ export async function fetchAssets(assetContract: string, gatherMode: GatherMode)
     });
     return response.data;
 }
+
+export async function fetchAssetsForRanking(assetContract: string, amount: number, page = 0): Promise<Asset[]> {
+    const url = config.universalPageCollectionBase + `/assets/${assetContract}/tokens?page=${page}&perPage=${amount}`;
+    const response = await axios.get<Asset[]>(url, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0'
+        }
+    });
+    return response.data;
+}
