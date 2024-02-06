@@ -1,10 +1,11 @@
 import { fetchAssets, fetchFloorPricePer } from '../requests/universalpage';
 import { padRight, readFileContent, writeFileContent } from '../utils';
-import dayjs from 'dayjs';
 import { Asset, GatherMode, StaticChillWhaleStats } from 'index';
 import { isBurntWhaleClaimed, isChillClaimed } from '../requests/onchain';
 import { fetchStaticStats } from '../requests/chillwhales';
 import { colorMapping, rankColorConfig } from '../config';
+
+import dayjs from 'dayjs';
 import chalk from 'chalk';
 
 const chillClaimedCache = JSON.parse(readFileContent('cache', 'chillClaimed.json')) as Record<string, boolean>;
@@ -40,6 +41,24 @@ export async function fetchChillWhalesFloor(assetContract: string) {
                 mappedPrice.set(skin, price);
             }
         }
+
+        let chillUnClaimedFloor = 0;
+        let page = 0;
+        while (chillUnClaimedFloor === 0) {
+            const tempWhales = await fetchChillWhalesAssets(
+                assetContract,
+                new Map<string, Asset>(),
+                'price-low-high',
+                page
+            );
+            const found = tempWhales.find(whale => !whale.chillClaimed);
+            if (found) {
+                chillUnClaimedFloor = parseInt(found.listingItemPrice, 10) / 1e18;
+            } else {
+                page++;
+            }
+        }
+        mappedPrice.set('$CHILL', chillUnClaimedFloor);
         // Convert the map into an array and sort it
         const sortedArray = Array.from(mappedPrice).sort((a, b) => a[1] - b[1]);
         // Format the sorted array into rows with three items each
@@ -52,7 +71,6 @@ export async function fetchChillWhalesFloor(assetContract: string) {
                     .join('') + '\n'
             );
         }
-
         return `Floor Prices (last sync: ${dayjs().format('YYYY-MM-DD HH:mm:ss')})\n${rows.join('')}`;
     } catch (error) {
         return `Error fetching floor price: ${error.message}`;
@@ -62,16 +80,18 @@ export async function fetchChillWhalesFloor(assetContract: string) {
 export async function fetchChillWhalesAssets(
     assetContract: string,
     assetDetailsMap: Map<string, Asset>,
-    gatherMode: GatherMode
+    gatherMode: GatherMode,
+    page = 0
 ) {
     if (!scores) {
         scores = await fetchStaticStats();
     }
-    const assets = await fetchAssets(assetContract, gatherMode);
+    const assets = await fetchAssets(assetContract, gatherMode, page);
     for (const asset of assets) {
         await updateClaimStatus(asset, asset.tokenId, burntWhalesCache, 'burntWhaleClaimed', isBurntWhaleClaimed);
         await updateClaimStatus(asset, asset.tokenId, chillClaimedCache, 'chillClaimed', isChillClaimed);
-        assetDetailsMap.set(asset.tokenName.split('#')[1], asset);
+        //        assetDetailsMap.set(asset.tokenName.split('#')[1], asset);
+        assetDetailsMap.set(asset.tokenId, asset);
     }
     return assets;
 }

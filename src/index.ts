@@ -2,12 +2,14 @@ import chalk from 'chalk';
 import config from './config';
 
 import { Asset, AssetConfig, GatherMode } from './@types';
-import { readFileContent } from './utils';
+import { openUrl, readFileContent } from './utils';
 import { initializeUI } from './ui';
-import { assetFloorFunctions } from './collection-functions/fetchFloorPrices';
-import { assetFetchFunctions } from './collection-functions/fetchAssets';
-import { assetDetailsFunctions } from './collection-functions/assetDetails';
-import { formatAssetListFunctions } from './collection-functions/formatAssetList';
+import {
+    assetDetailsFunctions,
+    assetFetchFunctions,
+    assetFloorFunctions,
+    formatAssetListFunctions
+} from './collection-functions/repository';
 
 const args = process.argv.slice(2);
 
@@ -21,9 +23,8 @@ if (!assetConfig.assetContract) {
 const displayedAssets = new Map<string, string>();
 const assetDetailsMap = new Map<string, Asset>();
 
-//let scores: StaticStats;
 let gatherMode: GatherMode = 'recently-listed';
-let focusedLine = 0; // Variable to keep track of the focused line
+let focusedAssetTokenId: string;
 
 // Initialize UI components
 const { screen, masterView, floorPriceBox, detailsView, modeView } = initializeUI();
@@ -34,6 +35,7 @@ async function setAssets() {
         assetDetailsMap,
         gatherMode
     )) as Asset[];
+    focusedAssetTokenId = focusedAssetTokenId || newAssets[0].tokenId;
     updateDisplayedAssets(newAssets);
     updateFocus();
     screen.render();
@@ -60,13 +62,24 @@ async function setFloor() {
 
 function setupKeyBindings() {
     masterView.key(['up', 'down'], handleArrowKeys);
+    screen.key('s', () => {
+        openUrl(
+            `${config.universalPageWebsiteCollectionBase}/${assetConfig.assetContract}/${assetDetailsMap.get(focusedAssetTokenId).tokenId}`,
+            config.openUrlIn
+        );
+    });
     screen.key('t', toggleGatherMode);
     screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
 }
 
 function handleArrowKeys(_: never, key: { name: string }) {
-    if (key.name === 'up' && focusedLine > 0) focusedLine--;
-    else if (key.name === 'down' && focusedLine < displayedAssets.size - 1) focusedLine++;
+    const tokenIds = Array.from(displayedAssets.keys());
+    const currentIndex = tokenIds.indexOf(focusedAssetTokenId);
+    if (key.name === 'up' && currentIndex > 0) {
+        focusedAssetTokenId = tokenIds[currentIndex - 1];
+    } else if (key.name === 'down' && currentIndex < tokenIds.length - 1) {
+        focusedAssetTokenId = tokenIds[currentIndex + 1];
+    }
     updateFocus();
     screen.render();
 }
@@ -83,29 +96,26 @@ async function toggleGatherMode() {
 
 function updateFocus() {
     let content = '';
-    let line = 0;
-    displayedAssets.forEach(value => {
-        const tokenId = value.match(/#(\d+)/)[1];
-        if (line === focusedLine) {
-            content += chalk.inverse(value) + '\n'; // Invert the color of the focused line
-            updateDetailsView(tokenId); // Update the details box with the selected asset
+    displayedAssets.forEach((value, tokenId) => {
+        if (tokenId === focusedAssetTokenId) {
+            content += chalk.inverse(value) + '\n';
+            updateDetailsView(tokenId);
         } else {
             content += value + '\n';
         }
-        line++;
     });
     masterView.setContent(content);
 }
 
 function updateDetailsView(assetId: string) {
     const assetDetails = assetDetailsFunctions[assetConfig.functionsNamespace](assetId, assetDetailsMap);
-    detailsView.setContent(`Details for Asset #${assetId}:\n========================\n${assetDetails}`);
+    detailsView.setContent(`${assetDetailsMap.get(assetId).tokenName}:\n========================\n${assetDetails}`);
 }
 
 function updateDisplayedAssets(newAssets: Asset[]) {
     newAssets.forEach(asset => {
         const formattedString = formatAssetListFunctions[assetConfig.functionsNamespace](asset);
-        displayedAssets.set(asset.listingId, formattedString);
+        displayedAssets.set(asset.tokenId, formattedString);
     });
 
     masterView.setContent(Array.from(displayedAssets.values()).join('\n'));
