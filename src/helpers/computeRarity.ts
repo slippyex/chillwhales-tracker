@@ -8,6 +8,8 @@ interface RarityScore {
     rank?: number;
 }
 
+let isUnrevealed = true;
+
 function addTraitCountAsTrait(nfts: Asset[]): void {
     nfts.forEach(nft => {
         const traitCount = Object.keys(nft.tokenAttributes).length;
@@ -66,9 +68,14 @@ async function fetchAllAssets(assetContract: string, amount: number): Promise<As
     return allAssets;
 }
 
+export function getUnrevealedStatus(): boolean {
+    return isUnrevealed;
+}
+
 export async function getCollectionRanking(assetConfig: AssetConfig): Promise<RarityLookup> {
     const scores = JSON.parse(readFileContent('cache', `${assetConfig.collection}Scores.json`)) as RarityLookup;
-    if (scores.rarity) {
+    isUnrevealed = (scores?.traitFrequencies?.STATUS?.UNREVEALED ?? -1) === (scores?.assetsTotal ?? 0);
+    if (scores.rarity && !isUnrevealed) {
         return scores;
     } else {
         return await calculateRarity(assetConfig);

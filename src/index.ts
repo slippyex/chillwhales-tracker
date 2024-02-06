@@ -86,7 +86,7 @@ function handleArrowKeys(_: never, key: { name: string }) {
 
 async function toggleGatherMode() {
     gatherMode = gatherMode === 'price-low-high' ? 'recently-listed' : 'price-low-high';
-    const modeLabel = gatherMode === 'recently-listed' ? 'recent listings' : 'floor whales';
+    const modeLabel = gatherMode === 'recently-listed' ? 'recent listings' : 'floor prices';
     modeView.setContent(`[t] mode: ${modeLabel}`);
     masterView.setContent(`fetching ${modeLabel} ...`);
     screen.render();

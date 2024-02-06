@@ -4,7 +4,7 @@ Initially started solely for the ChillWhales NFT 2.0 collection on the LUKSO blo
 
 
 ChillWhale Tracker is a real-time asset tracking and analytics tool for any LSP8 NFT2.0 collection. 
-It provides live updates on asset listings, floor prices, and whale scores, enhancing the experience of NFT enthusiasts and traders.
+It provides live updates on asset listings, floor prices, and rarity rankings, enhancing the experience of NFT enthusiasts and traders.
 
 ## Features
 
@@ -75,6 +75,7 @@ However, the `functionNamespace` can be set to something specific, but in that c
 
     UP/DOWN arrows: Scroll through the asset list.
     T: Toggle between 'price-low-high' and 'recently-listed' modes.
+    S: "Sniper" mode - opens a web browser with your selected item (focused) so that you can directly buy it from there
     ESC, Q, or Ctrl + C: Exit the application.
 
 
@@ -112,10 +113,14 @@ If (T) is the set of traits for the NFT, and (n) is the number of traits (includ
 NFTs are then ranked based on their calculated rarity scores (S), with a higher score indicating a rarer NFT. 
 The NFT with the highest rarity score is ranked first, and so on, with each NFT receiving a unique rank.
 
+### Ranking Disclaimer:
+
+As this is a generic approach to calculate rarities, you will use that information at your own risk. I will not be responsibility when you put all your salary into 
+an NFT with a (potentially) high rank ... #NFA ... #DYOR
 
 ## Configuration
 
-Modify the config.js file to set parameters like chain endpoint, contract address, and polling intervals.
+Modify the config.ts file to set parameters like chain endpoint, contract address, and polling intervals.
 Dependencies
 
    * axios: For HTTP requests.
