@@ -23,10 +23,10 @@ export const assetDetailsFunctions: AssetDetailsFunctionContainer = {
 
 export const assetFetchFunctions: AssetFetchAssetsFunctionContainer = {
     async chillWhales(assetConfig, assetDetailsMap, gatherMode): Promise<Asset[]> {
-        return await fetchChillWhalesAssets(assetConfig.assetContract, assetDetailsMap, gatherMode);
+        return fetchChillWhalesAssets(assetConfig.assetContract, assetDetailsMap, gatherMode);
     },
     async generic(assetConfig, assetDetailsMap, gatherMode) {
-        return await fetchGenericAssets(assetConfig, assetDetailsMap, gatherMode);
+        return fetchGenericAssets(assetConfig, assetDetailsMap, gatherMode);
     }
 };
 

@@ -59,9 +59,7 @@ export async function fetchChillWhalesFloor(assetContract: string) {
             }
         }
         mappedPrice.set('$CHILL', chillUnClaimedFloor);
-        // Convert the map into an array and sort it
         const sortedArray = Array.from(mappedPrice).sort((a, b) => a[1] - b[1]);
-        // Format the sorted array into rows with three items each
         const rows: string[] = [];
         for (let i = 0; i < sortedArray.length; i += 4) {
             rows.push(
@@ -90,7 +88,6 @@ export async function fetchChillWhalesAssets(
     for (const asset of assets) {
         await updateClaimStatus(asset, asset.tokenId, burntWhalesCache, 'burntWhaleClaimed', isBurntWhaleClaimed);
         await updateClaimStatus(asset, asset.tokenId, chillClaimedCache, 'chillClaimed', isChillClaimed);
-        //        assetDetailsMap.set(asset.tokenName.split('#')[1], asset);
         assetDetailsMap.set(asset.tokenId, asset);
     }
     return assets;
@@ -103,7 +100,7 @@ export function chillWhaleDetails(assetId: string, assetDetailsMap: Map<string, 
     return (
         chillClaimed +
         burntWhaleClaimed +
-        '========================\n' +
+        `${'-'.repeat(32)}\n` +
         asset.tokenAttributes
             .map(attr => {
                 const rarity = scores.traitsRarity[attr.key][attr.value];
