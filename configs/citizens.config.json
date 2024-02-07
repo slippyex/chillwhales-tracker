@@ -1,0 +1,7 @@
+{
+  "collection": "LUKSOCitizens",
+  "assetContract": "0x754a5d007d5f1188ef0db892ee115a7c01b38fa3",
+  "functionsNamespace": "generic",
+  "realtimeRanking": true,
+  "nonUniqueRanking": true
+}
