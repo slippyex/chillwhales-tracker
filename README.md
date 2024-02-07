@@ -67,6 +67,9 @@ with the following mandatory entries:
 - _collection_: name of the collection - you can choose on your own
 - _assetContract_: needs to be picked from the universal.page (I am sure, you'll spot it in the url when browsing)
 - _functionNamespace_: should generally be set to `generic` since it follows the generic approach to list items
+- _realtimeRanking_: recalculates the ranking lookups during the start (true/false)
+- _nonUniqueRanking_: assigns the same rank to an asset when the score is similar, otherwise it will be unique and assets with the same traits get a sequenced rank (true/false)
+
 
 However, the `functionNamespace` can be set to something specific, but in that case you need to study the code and follow the rules to implement a tailored display for a collection
 

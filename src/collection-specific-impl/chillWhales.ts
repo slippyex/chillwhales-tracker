@@ -1,12 +1,10 @@
 import { fetchAssets, fetchFloorPricePer } from '../requests/universalpage';
-import { padRight, readFileContent, writeFileContent } from '../utils';
+import { getColorForRank, padRight, readFileContent, writeFileContent } from '../utils';
 import { Asset, GatherMode, StaticChillWhaleStats } from 'index';
 import { isBurntWhaleClaimed, isChillClaimed } from '../requests/onchain';
 import { fetchStaticStats } from '../requests/chillwhales';
-import { colorMapping, rankColorConfig } from '../config';
 
 import dayjs from 'dayjs';
-import chalk from 'chalk';
 
 const chillClaimedCache = JSON.parse(readFileContent('cache', 'chillClaimed.json')) as Record<string, boolean>;
 const burntWhalesCache = JSON.parse(readFileContent('cache', 'burntWhaleClaimed.json')) as Record<string, boolean>;
@@ -101,6 +99,8 @@ export function chillWhaleDetails(assetId: string, assetDetailsMap: Map<string, 
         chillClaimed +
         burntWhaleClaimed +
         `${'-'.repeat(32)}\n` +
+        `${padRight('Rarity', 12)}: ${padRight(asset.rankClassification, 12)}\n` +
+        `${'-'.repeat(32)}\n` +
         asset.tokenAttributes
             .map(attr => {
                 const rarity = scores.traitsRarity[attr.key][attr.value];
@@ -111,11 +111,6 @@ export function chillWhaleDetails(assetId: string, assetDetailsMap: Map<string, 
     );
 }
 
-function getColorByRank(rank: number, config = rankColorConfig) {
-    const colorConfig = config.find(configItem => rank <= configItem.maxRank);
-    const color = colorConfig ? colorConfig.color : 'grey';
-    return colorMapping[color] || chalk.grey; // Default to grey if color not found
-}
 export function getRank(tokenNumber: number) {
     return Object.keys(scores.whalesScores)
         .sort((a, b) => scores.whalesScores[parseInt(b, 10)] - scores.whalesScores[parseInt(a, 10)])
@@ -127,14 +122,14 @@ export function formatChillWhalesListEntry(asset: Asset) {
     const tokenNumber = parseInt(asset.tokenName.split('#')[1], 10);
     const rank = getRank(tokenNumber);
     const price = parseFloat(asset.listingItemPrice) / 1e18;
-
     const timestamp = dayjs(asset.listingStartAt).format('YYYY-MM-DD HH:mm:ss');
     const tokenNamePadded = padRight(asset.tokenName, 20);
     const rankPadded = padRight(` Rank: ${rank}`, 13);
     const pricePadded = `LYX: ${price.toFixed(2)}`;
-
-    const color = getColorByRank(rank);
-    return color(
+    const maxItems = Object.keys(scores.whalesScores).length;
+    const colorSet = getColorForRank(rank, maxItems);
+    asset.rankClassification = colorSet.label;
+    return colorSet.color(
         `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '-' : '+'} $CHILL)${rankPadded}${pricePadded}`
     );
 }

@@ -1,13 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
-
-export interface IPackageJson {
-    name: string;
-    version: string;
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-}
+import { colorMapping, rankColorConfigPercentage } from './config';
+import chalk from 'chalk';
 
 function findProjectRoot(currentDir: string = __dirname): string | null {
     const parentDir = path.resolve(currentDir, '..');
@@ -100,4 +95,21 @@ function openUrlInDefaultBrowser(url: string): void {
             return;
         }
     });
+}
+
+function calculateDynamicMaxRanks(totalItems: number, config: typeof rankColorConfigPercentage) {
+    return config.map(entry => ({
+        ...entry,
+        maxRank: Math.ceil((entry.percentage / 100) * totalItems)
+    }));
+}
+
+export function getColorForRank(rank: number, totalItems: number) {
+    const dynamicConfig = calculateDynamicMaxRanks(totalItems, rankColorConfigPercentage);
+    const entry = dynamicConfig.find(entry => rank <= entry.maxRank);
+    const { color, label } = { color: entry?.color || 'white', label: entry?.label || 'unknown' }; // Default to 'white' if no match
+    return {
+        color: colorMapping[color] || chalk.blueBright,
+        label
+    };
 }

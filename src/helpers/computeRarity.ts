@@ -50,6 +50,18 @@ function assignUniqueRanks(rarityScores: RarityScore[]): RarityScore[] {
     return rarityScores;
 }
 
+function assignRanks(rarityScores: RarityScore[]): RarityScore[] {
+    rarityScores.sort((a, b) => b.score - a.score);
+    let currentRank = 1;
+    for (let i = 0; i < rarityScores.length; i++) {
+        if (i > 0 && rarityScores[i].score !== rarityScores[i - 1].score) {
+            currentRank = i + 1;
+        }
+        rarityScores[i].rank = currentRank;
+    }
+    return rarityScores;
+}
+
 async function fetchAllAssets(assetContract: string, amount: number): Promise<Asset[]> {
     let allAssets: Asset[] = [];
     let page = 0;
@@ -75,7 +87,7 @@ export function getUnrevealedStatus(): boolean {
 export async function getCollectionRanking(assetConfig: AssetConfig): Promise<RarityLookup> {
     const scores = JSON.parse(readFileContent('cache', `${assetConfig.collection}Scores.json`)) as RarityLookup;
     isUnrevealed = (scores?.traitFrequencies?.STATUS?.UNREVEALED ?? -1) === (scores?.assetsTotal ?? 0);
-    if (scores.rarity && !isUnrevealed) {
+    if (!assetConfig.realtimeRanking && scores.rarity && !isUnrevealed) {
         return scores;
     } else {
         return await calculateRarity(assetConfig);
@@ -85,15 +97,15 @@ export async function getCollectionRanking(assetConfig: AssetConfig): Promise<Ra
 async function calculateRarity(assetConfig: AssetConfig): Promise<RarityLookup> {
     const contract = assetConfig.assetContract;
     const collection = await fetchAllAssets(contract, 100);
-
-    addTraitCountAsTrait(collection);
-    const frequencies = calculateTraitFrequencies(collection);
-    const rarityScores = collection.map(asset => ({
+    const filteredCollection = collection.filter(c => c.tokenAttributes);
+    addTraitCountAsTrait(filteredCollection);
+    const frequencies = calculateTraitFrequencies(filteredCollection);
+    const rarityScores = filteredCollection.map(asset => ({
         id: asset.tokenId,
         score: calculateRarityScore(asset, frequencies)
     }));
 
-    const rankedNFTs = assignUniqueRanks(rarityScores);
+    const rankedNFTs = assetConfig.nonUniqueRanking ? assignRanks(rarityScores) : assignUniqueRanks(rarityScores);
     const mapped: Record<string, { score: number; rank: number }> = {};
     for (const ranked of rankedNFTs) {
         mapped[ranked.id] = {

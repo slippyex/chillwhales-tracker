@@ -1,4 +1,5 @@
 export interface Asset {
+    assetName: string;
     listingId: string;
     tokenName: string;
     listingItemPrice: string;
@@ -13,6 +14,7 @@ export interface Asset {
     }[];
     rank?: number;
     score?: number;
+    rankClassification?: string;
 }
 
 export interface StaticChillWhaleStats {
@@ -26,6 +28,8 @@ export interface AssetConfig {
     collection: string;
     assetContract: string;
     functionsNamespace: string;
+    realtimeRanking?: boolean;
+    nonUniqueRanking?: boolean;
 }
 
 export interface AssetFetchAssetsFunctionContainer {

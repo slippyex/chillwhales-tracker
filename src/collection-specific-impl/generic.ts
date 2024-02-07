@@ -3,8 +3,7 @@ import { fetchAssets, fetchFloorPricePer } from '../requests/universalpage';
 
 import { Asset, AssetConfig, GatherMode, RarityLookup } from '../@types';
 import dayjs from 'dayjs';
-import { padRight } from '../utils';
-import { colorMapping, rankColorConfigPercentage } from '../config';
+import { getColorForRank, padRight } from '../utils';
 import chalk from 'chalk';
 
 interface TraitFrequencies {
@@ -29,8 +28,8 @@ export async function fetchGenericAssets(
     const isUnrevealed = getUnrevealedStatus();
     for (const asset of assets) {
         if (!isUnrevealed) {
-            asset.rank = scores.rarity[asset.tokenId].rank;
-            asset.score = scores.rarity[asset.tokenId].score;
+            asset.rank = scores.rarity[asset.tokenId]?.rank || -1;
+            asset.score = scores.rarity[asset.tokenId]?.score || -1;
         } else {
             asset.rank = -1;
             asset.score = -1;
@@ -50,25 +49,30 @@ export async function fetchGenericFloorPrice(assetConfig: AssetConfig) {
 }
 export function formatGenericAsset(asset: Asset): string {
     const maxItems = scores.assetsTotal;
-    const color = getColorForRank(asset.rank, maxItems);
+    const colorSet = getColorForRank(asset.rank, maxItems);
     const price = parseFloat(asset.listingItemPrice) / 1e18;
     const timestamp = dayjs(asset.listingStartAt).format('YYYY-MM-DD HH:mm:ss');
-    const tokenNamePadded = padRight(asset.tokenName, 20);
+    const tokenNamePadded = padRight(asset.tokenName || asset.assetName, 20);
     const rankPadded = padRight(` Rank: ${asset.rank === -1 ? 'n/a' : asset.rank}`, 13);
     const pricePadded = `LYX: ${price.toFixed(2)}`;
-    return color(`${timestamp}\t${tokenNamePadded}${rankPadded}${pricePadded}`);
+    asset.rankClassification = colorSet.label;
+    return colorSet.color(`${timestamp}\t${tokenNamePadded}${rankPadded}${pricePadded}`);
 }
 
 export function assetDetailsGeneric(tokenId: string, assetDetailsMap: Map<string, Asset>) {
     const asset = assetDetailsMap.get(tokenId);
 
-    return asset.tokenAttributes
-        .map(attr => {
-            const percentage = percentages[attr.key][attr.value];
-            const value = `${attr.value} (${percentage}%)`;
-            return `${padRight(attr.key, 12)}: ${padRight(value, 12)}`;
-        })
-        .join('\n');
+    return (
+        `${padRight('Rarity', 12)}: ${padRight(asset.rankClassification, 12)}\n` +
+        `${'-'.repeat(32)}\n` +
+        asset.tokenAttributes
+            .map(attr => {
+                const percentage = percentages[attr.key][attr.value];
+                const value = `${attr.value} (${percentage}%)`;
+                return `${padRight(attr.key, 12)}: ${padRight(value, 12)}`;
+            })
+            .join('\n')
+    );
 }
 
 // =========================== private helpers ================================
@@ -83,18 +87,5 @@ function calculatePercentages(data: RarityLookup) {
             percentages[category][trait] = parseFloat(percentage.toFixed(2)); // Keeping two decimal places for readability
         }
     }
-
     return percentages;
-}
-function calculateDynamicMaxRanks(totalItems: number, config: typeof rankColorConfigPercentage) {
-    return config.map(entry => ({
-        ...entry,
-        maxRank: Math.ceil((entry.percentage / 100) * totalItems)
-    }));
-}
-
-function getColorForRank(rank: number, totalItems: number) {
-    const dynamicConfig = calculateDynamicMaxRanks(totalItems, rankColorConfigPercentage);
-    const color = dynamicConfig.find(entry => rank <= entry.maxRank)?.color || 'magenta'; // Default to 'magenta' if no match
-    return colorMapping[color] || chalk.grey; // Default to grey if color not found
 }

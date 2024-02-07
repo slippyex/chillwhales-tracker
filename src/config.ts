@@ -13,30 +13,19 @@ export default {
     openUrlIn: 'chrome'
 };
 
-// entries here are safe to edit
-export const rankColorConfig = [
-    { maxRank: 500, color: 'red' },
-    { maxRank: 1000, color: 'yellow' },
-    { maxRank: 3000, color: 'green' },
-    { maxRank: 5000, color: 'blue' },
-    { maxRank: 7000, color: 'white' },
-    { maxRank: Infinity, color: 'magenta' } // Default color for ranks above 7000
-];
-
 export const rankColorConfigPercentage = [
-    { percentage: 5, color: 'red' }, // Top 5%
-    { percentage: 10, color: 'yellow' }, // Top 10%
-    { percentage: 30, color: 'green' }, // Top 30%
-    { percentage: 50, color: 'blue' }, // Top 50%
-    { percentage: 70, color: 'white' }, // Top 70%
-    { percentage: 100, color: 'magenta' } // Remaining
+    { percentage: 1, color: 'red', label: 'Mythical' }, // mythical:        Top 1%
+    { percentage: 5, color: 'magenta', label: 'Epic' }, // epic:            Top 5%
+    { percentage: 10, color: 'yellow', label: 'Extremely Rare' }, // extremely rare:  Top 10%
+    { percentage: 25, color: 'cyan', label: 'Rare' }, // rare:            Top 25%
+    { percentage: 50, color: 'green', label: 'Uncommon' }, // uncommon:        Top 50%
+    { percentage: 100, color: 'white', label: 'Common' } // common:          Everyone else
 ];
-
 export const colorMapping: { [key: string]: chalk.Chalk } = {
-    red: chalk.red,
-    yellow: chalk.yellow,
-    green: chalk.green,
-    blue: chalk.blue,
-    white: chalk.white,
-    magenta: chalk.magenta
+    red: chalk.redBright,
+    magenta: chalk.magentaBright,
+    yellow: chalk.yellowBright,
+    cyan: chalk.cyanBright,
+    green: chalk.greenBright,
+    white: chalk.whiteBright
 };

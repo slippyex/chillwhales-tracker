@@ -108,8 +108,9 @@ function updateFocus() {
 }
 
 function updateDetailsView(assetId: string) {
+    const name = assetDetailsMap.get(assetId)?.tokenName || assetDetailsMap.get(assetId).assetName;
     const assetDetails = assetDetailsFunctions[assetConfig.functionsNamespace](assetId, assetDetailsMap);
-    detailsView.setContent(`${assetDetailsMap.get(assetId).tokenName}:\n${'-'.repeat(32)}\n${assetDetails}`);
+    detailsView.setContent(`${name}:\n${'-'.repeat(32)}\n${assetDetails}`);
 }
 
 function updateDisplayedAssets(newAssets: Asset[]) {

@@ -1,5 +1,7 @@
 {
   "collection": "GMBeans",
   "assetContract": "0x33517e5fedec388da59125fbabea6e2f6395c510",
-  "functionsNamespace": "generic"
+  "functionsNamespace": "generic",
+  "realtimeRanking": true,
+  "nonUniqueRanking": true
 }
