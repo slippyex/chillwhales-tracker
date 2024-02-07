@@ -12,7 +12,13 @@ It provides live updates on asset listings, floor prices, and rarity rankings, e
 - Display of assets based on price (low to high) and recent listings.
 - Live updates on floor prices in the ChillWhale collection.
 - Asset ranking analytics for better insight into asset value.
-- Interactive UI with scrolling and mode toggling capabilities.
+- Interactive UI with scrolling and (recent listings, floor) mode toggling capabilities.
+- Directly "snipe" an attractive asset by pressing "s" on the focused line.
+
+
+## Demonstration of the tool in action
+
+![ChillWhale Tracker Demo](/docs/chillwhale-tracker.gif)
 
 ## Installation
 
