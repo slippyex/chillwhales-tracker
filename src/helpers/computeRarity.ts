@@ -6,6 +6,7 @@ interface RarityScore {
     id: string;
     score: number;
     rank?: number;
+    assetDetails: Asset;
 }
 
 let isUnrevealed = true;
@@ -102,15 +103,22 @@ async function calculateRarity(assetConfig: AssetConfig): Promise<RarityLookup> 
     const frequencies = calculateTraitFrequencies(filteredCollection);
     const rarityScores = filteredCollection.map(asset => ({
         id: asset.tokenId,
-        score: calculateRarityScore(asset, frequencies)
+        score: calculateRarityScore(asset, frequencies),
+        assetDetails: asset
     }));
 
     const rankedNFTs = assetConfig.nonUniqueRanking ? assignRanks(rarityScores) : assignUniqueRanks(rarityScores);
-    const mapped: Record<string, { score: number; rank: number }> = {};
+    const mapped: Record<string, { score: number; rank: number; assetDetails: Asset }> = {};
     for (const ranked of rankedNFTs) {
         mapped[ranked.id] = {
-            score: ranked.score,
-            rank: ranked.rank
+            assetDetails: {
+                tokenName: ranked.assetDetails.tokenName,
+                tokenAttributes: ranked.assetDetails.tokenAttributes,
+                assetName: ranked.assetDetails.assetName,
+                tokenId: ranked.assetDetails.tokenId
+            },
+            rank: ranked.rank,
+            score: ranked.score
         };
     }
     const prepareFile: RarityLookup = {

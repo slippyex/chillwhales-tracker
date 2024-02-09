@@ -1,12 +1,12 @@
 export interface Asset {
     assetName: string;
-    listingId: string;
+    listingId?: string;
     tokenName: string;
-    listingItemPrice: string;
-    listingStartAt: string;
+    listingItemPrice?: string;
+    listingStartAt?: string;
     tokenId: string;
-    chillClaimed: boolean;
-    burntWhaleClaimed: boolean;
+    chillClaimed?: boolean;
+    burntWhaleClaimed?: boolean;
     tokenAttributes: {
         key: string;
         type: 'STRING' | 'NUMBER';
