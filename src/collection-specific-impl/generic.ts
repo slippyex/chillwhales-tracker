@@ -61,7 +61,9 @@ export function formatGenericAsset(asset: Asset): string {
 
 export function assetDetailsGeneric(tokenId: string, assetDetailsMap: Map<string, Asset>) {
     const asset = assetDetailsMap.get(tokenId);
-
+    if (asset.tokenAttributes.length > 1) {
+        asset.tokenAttributes = asset.tokenAttributes.filter(ta => ta.key !== 'STATUS' && ta.value !== 'UNREVEALED');
+    }
     return (
         `${padRight('Rarity', 12)}: ${padRight(asset.rankClassification, 12)}\n` +
         `${'-'.repeat(32)}\n` +

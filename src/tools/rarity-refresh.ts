@@ -13,11 +13,6 @@ const args = process.argv.slice(2);
             `provided config for collection ${args} is incomplete - no contract address found in the config`
         );
     }
-    if (assetConfig.functionsNamespace !== 'generic') {
-        throw new Error(
-            `collection ${assetConfig.collection} has a non-generic implementation ... Rarity Refresh just works for generic approaches`
-        );
-    }
     deleteFile('cache', `${assetConfig.collection}Scores.json`);
 
     console.log(`re-calculating rarity lookups for ${assetConfig.collection}`);

@@ -13,7 +13,9 @@ let isUnrevealed = true;
 
 function addTraitCountAsTrait(nfts: Asset[]): void {
     nfts.forEach(nft => {
-        const traitCount = Object.keys(nft.tokenAttributes).length;
+        let traitCount = Object.keys(nft.tokenAttributes).length;
+        if (nft.tokenAttributes.find(ta => ta.key === 'STATUS' && ta.value === 'UNREVEALED') && traitCount > 1)
+            traitCount--;
         nft.tokenAttributes.push({ key: 'TraitCount', type: 'NUMBER', value: traitCount.toString() }); // Add TraitCount as an artificial trait
     });
 }
@@ -32,10 +34,16 @@ function calculateTraitFrequencies(nfts: Asset[]): TraitFrequency {
             }
         });
     });
+    if (frequencies['STATUS']['UNREVEALED'] && Object.keys(frequencies).length > 1) {
+        delete frequencies['STATUS']['UNREVEALED'];
+    }
     return frequencies;
 }
 
 function calculateRarityScore(nft: Asset, frequencies: TraitFrequency): number {
+    if (nft.tokenAttributes.length > 1) {
+        nft.tokenAttributes = nft.tokenAttributes.filter(ta => ta.key !== 'STATUS' && ta.value !== 'UNREVEALED');
+    }
     return nft.tokenAttributes.reduce((acc, { key, value }) => {
         const frequency = frequencies[key][value];
         const rarity = 1 / frequency;
