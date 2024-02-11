@@ -79,9 +79,7 @@ export async function fetchChillWhalesAssets(
     gatherMode: GatherMode,
     page = 0
 ) {
-    if (!scores) {
-        scores = await fetchStaticStats();
-    }
+    await initializeWhaleScores();
     const assets = await fetchAssets(assetContract, gatherMode, page);
     for (const asset of assets) {
         await updateClaimStatus(asset, asset.tokenId, burntWhalesCache, 'burntWhaleClaimed', isBurntWhaleClaimed);
@@ -103,9 +101,13 @@ export function chillWhaleDetails(assetId: string, assetDetailsMap: Map<string, 
         `${'-'.repeat(32)}\n` +
         asset.tokenAttributes
             .map(attr => {
-                const rarity = scores.traitsRarity[attr.key][attr.value];
-                const value = `${attr.value} (${rarity.toFixed(2)}%)`;
-                return `${padRight(attr.key, 12)}: ${padRight(value, 12)}`;
+                try {
+                    const rarity = scores.traitsRarity[attr.key][attr.value];
+                    const value = `${attr.value} (${rarity.toFixed(2)}%)`;
+                    return `${padRight(attr.key, 12)}: ${padRight(value, 12)}`;
+                } catch (err) {
+                    return '';
+                }
             })
             .join('\n')
     );
@@ -132,4 +134,21 @@ export function formatChillWhalesListEntry(asset: Asset) {
     return colorSet.color(
         `${timestamp}\t${tokenNamePadded} (${asset.chillClaimed ? '-' : '+'} $CHILL)${rankPadded}${pricePadded}`
     );
+}
+
+export function formatChillWhalesListWalletEntry(asset: Asset, assetsTotal: number) {
+    const tokenNumber = parseInt(asset.tokenName.split('#')[1], 10);
+    const profileWallet = padRight(`${asset.profile}`, 20);
+    const rank = getRank(tokenNumber);
+    const tokenNamePadded = padRight(asset.tokenName, 20);
+    const rankPadded = padRight(` Rank: ${rank}`, 13);
+    const colorSet = getColorForRank(rank, assetsTotal);
+    asset.rankClassification = colorSet.label;
+    return colorSet.color(`${profileWallet}${tokenNamePadded} (${asset.chillClaimed ? '-' : '+'} $CHILL)${rankPadded}`);
+}
+
+export async function initializeWhaleScores(): Promise<void> {
+    if (!scores) {
+        scores = await fetchStaticStats();
+    }
 }

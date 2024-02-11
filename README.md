@@ -15,6 +15,44 @@ It provides live updates on asset listings, floor prices, and rarity rankings, e
 - Interactive UI with scrolling and (recent listings, floor) mode toggling capabilities.
 - Directly "snipe" an attractive asset by pressing "s" on the focused line.
 
+## Wallet Viewer
+
+Instead of watching Universal Page listings / floors, you can also provide one or a list of Universal Profile Wallet Addresses
+
+```
+npm run wallet lyxen 0x43242356xxxx 0xa34244xxxxx 
+```
+(to see your chillwhale holdings in the provided wallets)
+
+or
+```
+npm run wallet lyxen 0x43242356xxxx 0xa34244xxxxx 
+```
+(to see your lyxen holdings in the provided wallets)
+
+and so on ... 
+
+Instead of providing wallet addresses all the time, you can also create a file "profileWallets.json" under the `/cache/` folder with content similar to this
+
+```json
+[
+  {
+    "walletAddress": "0xFb4xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx29B8",
+    "walletName": "master wallet"
+  },
+  {
+    "walletAddress": "0x3e9xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx4156",
+    "walletName": "secondary"
+  },
+  {
+    "walletAddress": "0x46cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxb8b1",
+    "walletName": "side wallet"
+  }
+]
+```
+
+![Wallet Insights](/docs/wallet-insights.png)
+
 
 ## Demonstration of the tool in action
 

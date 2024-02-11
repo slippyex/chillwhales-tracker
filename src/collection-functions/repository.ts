@@ -3,10 +3,22 @@ import {
     AssetDetailsFunctionContainer,
     AssetFetchAssetsFunctionContainer,
     AssetFetchFloorsFunctionContainer,
-    AssetFormatListFunctionContainer
+    AssetFormatListFunctionContainer,
+    AssetInitializeScoresContainer,
+    AssetWalletFormatListFunctionContainer
 } from '../@types';
-import { chillWhaleDetails, fetchChillWhalesFloor } from '../collection-specific-impl/chillWhales';
-import { assetDetailsGeneric, fetchGenericFloorPrice } from '../collection-specific-impl/generic';
+import {
+    chillWhaleDetails,
+    fetchChillWhalesFloor,
+    formatChillWhalesListWalletEntry,
+    initializeWhaleScores
+} from '../collection-specific-impl/chillWhales';
+import {
+    assetDetailsGeneric,
+    fetchGenericFloorPrice,
+    formatGenericWalletAsset,
+    initializeGenericScores
+} from '../collection-specific-impl/generic';
 import { fetchChillWhalesAssets } from '../collection-specific-impl/chillWhales';
 import { fetchGenericAssets } from '../collection-specific-impl/generic';
 import { formatChillWhalesListEntry } from '../collection-specific-impl/chillWhales';
@@ -45,5 +57,23 @@ export const formatAssetListFunctions: AssetFormatListFunctionContainer = {
     },
     generic(asset: Asset): string {
         return formatGenericAsset(asset);
+    }
+};
+
+export const formatAssetWalletListFunctions: AssetWalletFormatListFunctionContainer = {
+    chillWhales(asset: Asset, assetsTotal: number): string {
+        return formatChillWhalesListWalletEntry(asset, assetsTotal);
+    },
+    generic(asset: Asset, assetsTotal: number): string {
+        return formatGenericWalletAsset(asset, assetsTotal);
+    }
+};
+
+export const initializeScores: AssetInitializeScoresContainer = {
+    async chillWhales(): Promise<void> {
+        await initializeWhaleScores();
+    },
+    async generic(assetConfig) {
+        await initializeGenericScores(assetConfig);
     }
 };

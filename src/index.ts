@@ -10,6 +10,7 @@ import {
     assetFloorFunctions,
     formatAssetListFunctions
 } from './collection-functions/repository';
+import { Widgets } from 'blessed';
 
 const args = process.argv.slice(2);
 
@@ -27,7 +28,11 @@ let gatherMode: GatherMode = 'recently-listed';
 let focusedAssetTokenId: string;
 
 // Initialize UI components
-const { screen, masterView, floorPriceBox, detailsView, modeView } = initializeUI();
+let screen: Widgets.Screen;
+let masterView: Widgets.BoxElement;
+let detailsView: Widgets.BoxElement;
+let floorPriceBox: Widgets.BoxElement;
+let modeView: Widgets.BoxElement;
 
 async function setAssets() {
     const newAssets = (await assetFetchFunctions[assetConfig.functionsNamespace](
@@ -47,6 +52,13 @@ async function setFloor() {
 }
 
 (async () => {
+    const { _screen, _masterView, _floorPriceBox, _detailsView, _modeView } = initializeUI('sync');
+    screen = _screen;
+    masterView = _masterView;
+    detailsView = _detailsView;
+    floorPriceBox = _floorPriceBox;
+    modeView = _modeView;
+
     setupKeyBindings();
     screen.render();
 

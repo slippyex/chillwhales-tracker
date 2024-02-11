@@ -1,17 +1,17 @@
 import blessed from 'blessed';
 
-export function initializeUI() {
+export function initializeUI(mode: 'wallet' | 'sync') {
     const screen = blessed.screen({
         smartCSR: true,
-        title: 'ChillWhales Tracker'
+        title: `ChillWhales Tracker ${mode === 'wallet' ? 'Wallet' : 'Sync'}`
     });
 
     const masterView = blessed.box({
         parent: screen,
         top: 'top',
         left: 'left',
-        width: '70%',
-        height: '80%',
+        width: mode === 'wallet' ? '60%' : '70%',
+        height: mode === 'wallet' ? '100%' : '80%',
         scrollable: true,
         alwaysScroll: true,
         content: 'Fetching assets...',
@@ -34,30 +34,33 @@ export function initializeUI() {
         }
     });
 
-    const floorPriceBox = blessed.box({
-        parent: screen,
-        top: '80%',
-        left: 'center',
-        width: '100%',
-        height: '20%',
-        content: 'Fetching floor prices...',
-        border: 'line',
-        style: {
-            fg: 'white',
-            bg: 'black',
-            border: {
-                fg: '#f0f0f0'
-            }
-        }
-    });
+    const floorPriceBox =
+        mode === 'wallet'
+            ? null
+            : blessed.box({
+                  parent: screen,
+                  top: '80%',
+                  left: 'center',
+                  width: '100%',
+                  height: '20%',
+                  content: 'Fetching floor prices...',
+                  border: 'line',
+                  style: {
+                      fg: 'white',
+                      bg: 'black',
+                      border: {
+                          fg: '#f0f0f0'
+                      }
+                  }
+              });
 
     // Create a details box
     const detailsView = blessed.box({
         parent: screen,
         top: 'top',
-        left: '70%',
-        width: '30%',
-        height: '70%',
+        left: mode === 'wallet' ? '60%' : '70%',
+        width: mode === 'wallet' ? '40%' : '30%',
+        height: mode === 'wallet' ? '100%' : '70%',
         content: 'Select an asset to view details...',
         border: 'line',
         style: {
@@ -69,22 +72,31 @@ export function initializeUI() {
         }
     });
 
-    const modeView = blessed.box({
-        parent: screen,
-        top: '70%',
-        left: '70%',
-        width: '30%',
-        height: '10%',
-        content: '[t] mode: recent listings',
-        border: 'line',
-        style: {
-            fg: 'white',
-            bg: 'black',
-            border: {
-                fg: '#f0f0f0'
-            }
-        }
-    });
+    const modeView =
+        mode === 'wallet'
+            ? null
+            : blessed.box({
+                  parent: screen,
+                  top: '70%',
+                  left: '70%',
+                  width: '30%',
+                  height: '10%',
+                  content: '[t] mode: recent listings',
+                  border: 'line',
+                  style: {
+                      fg: 'white',
+                      bg: 'black',
+                      border: {
+                          fg: '#f0f0f0'
+                      }
+                  }
+              });
 
-    return { screen, masterView, floorPriceBox, detailsView, modeView };
+    return {
+        _screen: screen,
+        _masterView: masterView,
+        _floorPriceBox: floorPriceBox,
+        _detailsView: detailsView,
+        _modeView: modeView
+    };
 }

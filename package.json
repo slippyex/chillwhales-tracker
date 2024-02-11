@@ -9,7 +9,7 @@
   "scripts": {
     "sync": "ts-node src/index.ts",
     "rarity": "ts-node src/tools/rarity-refresh.ts",
-    "wallet": "ts-node src/wallet.ts",
+    "wallet": "ts-node src/wallet-insights.ts",
     "build": "tsc",
     "format-check": "prettier --config .prettierrc --check ./{src,tests}/**/*.ts",
     "format": "yarn format-check --write",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@erc725/erc725.js": "^0.21.2",
     "@erc725/smart-contracts": "^6.0.0",
+    "@inquirer/prompts": "^4.0.0",
     "axios": "^1.6.7",
     "blessed": "^0.1.81",
     "chalk": "^4",

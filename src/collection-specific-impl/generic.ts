@@ -41,6 +41,7 @@ export async function fetchGenericAssets(
 
 export async function fetchGenericFloorPrice(assetConfig: AssetConfig) {
     try {
+        await initializeGenericScores(assetConfig);
         const price = await fetchFloorPricePer(assetConfig.assetContract);
         return `Floor Prices (last sync: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}) >> ${chalk.yellowBright(price)} LYX`;
     } catch (error) {
@@ -57,6 +58,15 @@ export function formatGenericAsset(asset: Asset): string {
     const pricePadded = `LYX: ${price.toFixed(2)}`;
     asset.rankClassification = colorSet.label;
     return colorSet.color(`${timestamp}\t${tokenNamePadded}${rankPadded}${pricePadded}`);
+}
+
+export function formatGenericWalletAsset(asset: Asset, assetsTotal: number): string {
+    const colorSet = getColorForRank(asset.rank, assetsTotal);
+    const profileWallet = padRight(`${asset.profile}`, 20);
+    const tokenNamePadded = padRight(asset.tokenName || asset.assetName, 20);
+    const rankPadded = padRight(`Rank: ${asset.rank === -1 ? 'n/a' : asset.rank}`, 13);
+    asset.rankClassification = colorSet.label;
+    return colorSet.color(`${profileWallet}${tokenNamePadded}${rankPadded}`);
 }
 
 export function assetDetailsGeneric(tokenId: string, assetDetailsMap: Map<string, Asset>) {
@@ -77,6 +87,12 @@ export function assetDetailsGeneric(tokenId: string, assetDetailsMap: Map<string
     );
 }
 
+export async function initializeGenericScores(assetConfig: AssetConfig): Promise<void> {
+    if (!scores) {
+        scores = await getCollectionRanking(assetConfig);
+        percentages = calculatePercentages(scores);
+    }
+}
 // =========================== private helpers ================================
 
 function calculatePercentages(data: RarityLookup) {

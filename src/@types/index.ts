@@ -15,6 +15,7 @@ export interface Asset {
     rank?: number;
     score?: number;
     rankClassification?: string;
+    profile?: string;
 }
 
 export interface StaticChillWhaleStats {
@@ -43,6 +44,9 @@ export interface AssetFetchAssetsFunctionContainer {
 export interface AssetFetchFloorsFunctionContainer {
     [key: string]: (assetConfig: AssetConfig) => Promise<string>;
 }
+export interface AssetInitializeScoresContainer {
+    [key: string]: (assetConfig?: AssetConfig) => Promise<void>;
+}
 
 export interface AssetDetailsFunctionContainer {
     [key: string]: (assetId: string, assetDetailsMap: Map<string, Asset>) => string;
@@ -51,7 +55,9 @@ export interface AssetDetailsFunctionContainer {
 export interface AssetFormatListFunctionContainer {
     [key: string]: (asset: Asset) => string;
 }
-
+export interface AssetWalletFormatListFunctionContainer {
+    [key: string]: (asset: Asset, assetsTotal: number) => string;
+}
 export interface TraitFrequency {
     [key: string]: {
         [value: string]: number;
@@ -61,4 +67,9 @@ export interface RarityLookup {
     rarity: Record<string, { score: number; rank: number }>;
     traitFrequencies: TraitFrequency;
     assetsTotal: number;
+}
+
+export interface UniversalProfile {
+    walletAddress: string;
+    walletName?: string;
 }
