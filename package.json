@@ -10,6 +10,7 @@
     "sync": "ts-node src/index.ts",
     "rarity": "ts-node src/tools/rarity-refresh.ts",
     "wallet": "ts-node src/wallet-insights.ts",
+    "find": "ts-node src/asset-finder.ts",
     "build": "tsc",
     "format-check": "prettier --config .prettierrc --check ./{src,tests}/**/*.ts",
     "format": "yarn format-check --write",

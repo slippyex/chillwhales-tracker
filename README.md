@@ -53,6 +53,13 @@ Instead of providing wallet addresses all the time, you can also create a file "
 
 ![Wallet Insights](/docs/wallet-insights.png)
 
+## Asset finder
+
+In order to find particular asset rankings, just use
+
+```
+npm run find [collection-name] assetNumber assetNumber assetNumber assetNumber...
+```
 
 ## Demonstration of the tool in action
 

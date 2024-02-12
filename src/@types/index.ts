@@ -64,9 +64,10 @@ export interface TraitFrequency {
     };
 }
 export interface RarityLookup {
-    rarity: Record<string, { score: number; rank: number }>;
+    rarity: Record<string, { score: number; rank: number; assetDetails?: Asset }>;
     traitFrequencies: TraitFrequency;
     assetsTotal: number;
+    assetDetails?: Asset;
 }
 
 export interface UniversalProfile {
