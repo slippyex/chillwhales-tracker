@@ -36,3 +36,12 @@ export async function getTokensByContract(contractAddress: string, profileAddres
         throw new Error(error);
     }
 }
+
+export async function getWalletByTokenId(contractAddress: string, tokenId: string): Promise<string> {
+    const genericContract = new web3.eth.Contract(JSON.parse(genericContractABI), contractAddress);
+    try {
+        return (await genericContract.methods.tokenOwnerOf(tokenId).call()) as string;
+    } catch (error) {
+        throw new Error(error);
+    }
+}

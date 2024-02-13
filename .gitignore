@@ -1,5 +1,7 @@
 .idea
-cache/*.json
+cache/*.*
 node_modules
 .build
 playground.ts
+lyxenHelper.ts
+wallet.ts
