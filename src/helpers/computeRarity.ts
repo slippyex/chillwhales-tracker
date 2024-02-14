@@ -34,7 +34,7 @@ function calculateTraitFrequencies(nfts: Asset[]): TraitFrequency {
             }
         });
     });
-    if (frequencies['STATUS']['UNREVEALED'] && Object.keys(frequencies).length > 1) {
+    if (frequencies['STATUS'] && frequencies['STATUS']['UNREVEALED'] && Object.keys(frequencies).length > 1) {
         delete frequencies['STATUS']['UNREVEALED'];
     }
     return frequencies;
